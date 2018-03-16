@@ -1,8 +1,9 @@
-from flask import Flask, request, abort
+from flask import Flask, request, abort, Response
 import datetime
 import time
 import base64
 import hmac
+import binascii
 
 key = "PgQDSxNSFAACBUcURRw1CBEITFoMSA==".encode('utf-8')
 app = Flask(__name__)
@@ -13,7 +14,8 @@ def generate_cookie(user, admin=False):
     epochtime = round(time.mktime(dts.timetuple()) + dts.microsecond / 1e6)
     perm = "administrator" if admin else "user"
     hm = hmac.new(key, "{}{}".format(user, epochtime).encode('utf-8'))
-    s = "{},{},com402,hw2,ex3,{},{}".format(user, epochtime, perm, hm.digest())
+    x = base64.b64encode(hm.digest()).decode()
+    s = "{},{},com402,hw2,ex3,{},{}".format(user, epochtime, perm, x)
     return base64.b64encode(s.encode('utf-8'))
 
 
@@ -38,11 +40,20 @@ def ex3login():
 @app.route('/ex3/list', methods=['POST'])
 def ex3list():
     if 'LoginCookie' in request.cookies:
-        loginCookie = base64.b64decode(request.cookies.get('LoginCookie'))
-        fields = loginCookie.split(',')
-        return "Cool."
-    else:
-        return abort(403)
+        loginCookie = request.cookies.get('LoginCookie')
+        decoded = base64.b64decode(loginCookie).decode('utf-8')
+        fields = decoded.split(',')
+        try:
+            hmu = base64.b64decode(fields[-1])
+            hmc = hmac.new(key, "{}{}".format(fields[0], fields[1]).encode('utf-8')).digest()
+            if hmac.compare_digest(hmu, hmc):
+                if fields[0] != "administrator":
+                    return Response("Hi user", 201)
+                else:
+                    return "Hi admin"
+        except binascii.Error:
+            pass
+    return abort(403)
 
 
 app.run()
