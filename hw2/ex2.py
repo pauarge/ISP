@@ -17,7 +17,7 @@ def parse_number(raw):
 
 
 def H(a):
-    return int(hashlib.sha256(a.encode('utf-8')).hexdigest(), 16)
+    return int(hashlib.sha256(a).hexdigest(), 16)
 
 
 async def hello():
@@ -27,29 +27,33 @@ async def hello():
 
         x = await websocket.recv()
         salt = parse_number(x)
+        SB = salt.to_bytes((salt.bit_length() + 7) // 8, 'big')
         print("<- salt: {}".format(salt))
 
         a = random.SystemRandom().getrandbits(32)
         A = pow(g, a, N)
         print("-> A: {}".format(A))
-        buff = A.to_bytes((A.bit_length() + 7) // 8, 'big')
-        await websocket.send(binascii.hexlify(buff).decode())
+        AB = A.to_bytes((A.bit_length() + 7) // 8, 'big')
+        await websocket.send(binascii.hexlify(AB).decode())
 
         x = await websocket.recv()
         B = parse_number(x)
+        BB = B.to_bytes((B.bit_length() + 7) // 8, 'big')
         print("<- B: {}".format(B))
 
-        u = H("{}{}".format(A, B))
+        u = H(AB + BB)
         print("u: {}".format(u))
 
-        up = H("{}:{}".format(email, password))
-        x = H("{}{}".format(salt, up))
+        up = H("{}:{}".format(email, password).encode('utf-8'))
+        upB = up.to_bytes((up.bit_length() + 7) // 8, 'big')
+        x = H(SB + upB)
         print("x: {}".format(x))
 
-        S = pow(B - pow(g, x, N), a + u * x, N) % N
+        S = pow(B - pow(g, x, N), a + u * x, N)
+        SB = S.to_bytes((S.bit_length() + 7) // 8, 'big')
         print("S: {}".format(S))
 
-        habs = H("{}{}{}".format(A, B, S))
+        habs = H(AB + BB + SB)
         print("-> H(A||B||S): {}".format(habs))
         buff = habs.to_bytes((habs.bit_length() + 7) // 8, 'big')
         await websocket.send(binascii.hexlify(buff).decode())
