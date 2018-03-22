@@ -27,8 +27,6 @@ def ex3login():
 
     response = app.make_response("Login page")
     if user and password:
-        response.set_cookie('cookie_name', value='values')
-
         if user == "administrator" and password == "42":
             response.set_cookie('LoginCookie', value=generate_cookie(user, True))
         else:
