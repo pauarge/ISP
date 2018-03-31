@@ -74,10 +74,10 @@ func main() {
 	passwds := getPasswords()
 
 	fmt.Println("Getting dictionary")
-	dict := getDictionary("/Users/pauargelaguet/Development/isp/hw3/data/rockyou.txt")
+	dict := getDictionary("data/rockyou.txt")
 
 	fmt.Println("Getting hexes")
-	hexes := getDictionary("/Users/pauargelaguet/Development/isp/hw3/data/hexes.txt")
+	hexes := getDictionary("data/hexes.txt")
 
 	fmt.Println("Cracking...")
 	siz := len(*dict)
