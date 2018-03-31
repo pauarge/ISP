@@ -60,7 +60,7 @@ func testpasswords(n int, wg *sync.WaitGroup, passwds []string) {
 }
 
 func main() {
-	fileHandle, _ := os.Open("/Users/pauargelaguet/Development/isp/hw3/data/hw3_ex2.txt")
+	fileHandle, _ := os.Open("data/hw3_ex2.txt")
 	defer fileHandle.Close()
 	fileScanner := bufio.NewScanner(fileHandle)
 

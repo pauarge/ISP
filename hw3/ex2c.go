@@ -7,6 +7,7 @@ import (
 	"sync"
 	"crypto/sha256"
 	"encoding/hex"
+	"strings"
 )
 
 const CPUS = 8
@@ -20,12 +21,13 @@ func stringInSlice(a string, list *[]string) bool {
 	return false
 }
 
-func getPasswords() *[]string {
-	fileHandle, _ := os.Open("/Users/pauargelaguet/Development/isp/hw3/data/hw3_ex2.txt")
+func getPasswords() (*[]string, *[]string) {
+	fileHandle, _ := os.Open("data/hw3_ex2.txt")
 	defer fileHandle.Close()
 	fileScanner := bufio.NewScanner(fileHandle)
 
 	var passwds []string
+	var salts []string
 
 	for i := 0; i < 22; i++ {
 		fileScanner.Scan()
@@ -33,10 +35,12 @@ func getPasswords() *[]string {
 
 	for i := 0; i < 10; i++ {
 		fileScanner.Scan()
-		passwds = append(passwds, fileScanner.Text())
+		parts := strings.Split(fileScanner.Text(), ",")
+		salts = append(salts, parts[0])
+		passwds = append(passwds, parts[1])
 	}
 
-	return &passwds
+	return &passwds, &salts
 }
 
 func getDictionary(path string) *[]string {
@@ -53,17 +57,15 @@ func getDictionary(path string) *[]string {
 	return &dict
 }
 
-func testPasswords(batchSize int, start int, wg *sync.WaitGroup, dict *[]string, passwds *[]string, hexes *[]string) {
+func testPasswords(batchSize int, start int, wg *sync.WaitGroup, dict *[]string, passwds *[]string, salts *[]string) {
 	defer wg.Done()
 	for i := start; i < start+batchSize || i < len(*dict); i++ {
-		for j := 0; j < len(*hexes); j++ {
-			hasher := sha256.New()
-			hasher.Write([]byte((*dict)[i]))
-			hasher.Write([]byte((*hexes)[j]))
-			res := hex.EncodeToString(hasher.Sum(nil))
-			if stringInSlice(res, passwds) {
-				fmt.Println((*dict)[i])
-			}
+		hasher := sha256.New()
+		hasher.Write([]byte((*dict)[i]))
+		hasher.Write([]byte((*salts)[i]))
+		res := hex.EncodeToString(hasher.Sum(nil))
+		if stringInSlice(res, passwds) {
+			fmt.Println((*dict)[i])
 		}
 	}
 	fmt.Println("Finished process starting at ", start)
@@ -71,13 +73,10 @@ func testPasswords(batchSize int, start int, wg *sync.WaitGroup, dict *[]string,
 
 func main() {
 	fmt.Println("Getting passwords")
-	passwds := getPasswords()
+	passwds, salts := getPasswords()
 
 	fmt.Println("Getting dictionary")
 	dict := getDictionary("data/rockyou.txt")
-
-	fmt.Println("Getting hexes")
-	hexes := getDictionary("data/hexes.txt")
 
 	fmt.Println("Cracking...")
 	siz := len(*dict)
@@ -87,7 +86,7 @@ func main() {
 	wg.Add(CPUS)
 
 	for i := 0; i < CPUS; i++ {
-		go testPasswords(batchSize, batchSize*i, &wg, dict, passwds, hexes)
+		go testPasswords(batchSize, batchSize*i, &wg, dict, passwds, salts)
 	}
 
 	wg.Wait()

@@ -21,7 +21,7 @@ func stringInSlice(a string, list *[]string) bool {
 }
 
 func getPasswords() *[]string {
-	fileHandle, _ := os.Open("/Users/pauargelaguet/Development/isp/hw3/data/hw3_ex2.txt")
+	fileHandle, _ := os.Open("data/hw3_ex2.txt")
 	defer fileHandle.Close()
 	fileScanner := bufio.NewScanner(fileHandle)
 
@@ -40,7 +40,7 @@ func getPasswords() *[]string {
 }
 
 func getDictionary() *[]string {
-	fileHandle, _ := os.Open("/Users/pauargelaguet/Development/isp/hw3/data/dict-perms.txt")
+	fileHandle, _ := os.Open("data/dict-perms.txt")
 	defer fileHandle.Close()
 	fileScanner := bufio.NewScanner(fileHandle)
 
