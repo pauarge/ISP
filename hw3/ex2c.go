@@ -12,15 +12,6 @@ import (
 
 const CPUS = 8
 
-func stringInSlice(a string, list *[]string) bool {
-	for _, b := range *list {
-		if b == a {
-			return true
-		}
-	}
-	return false
-}
-
 func getPasswords() (*[]string, *[]string) {
 	fileHandle, _ := os.Open("data/hw3_ex2.txt")
 	defer fileHandle.Close()
@@ -29,15 +20,13 @@ func getPasswords() (*[]string, *[]string) {
 	var passwds []string
 	var salts []string
 
-	for i := 0; i < 22; i++ {
-		fileScanner.Scan()
-	}
-
-	for i := 0; i < 10; i++ {
-		fileScanner.Scan()
-		parts := strings.Split(fileScanner.Text(), ",")
-		salts = append(salts, parts[0])
-		passwds = append(passwds, parts[1])
+	for fileScanner.Scan() {
+		line := fileScanner.Text()
+		parts := strings.Split(line, ",")
+		if len(parts) > 1 {
+			salts = append(salts, parts[0])
+			passwds = append(passwds, strings.Trim(parts[1], " "))
+		}
 	}
 
 	return &passwds, &salts
@@ -60,12 +49,14 @@ func getDictionary(path string) *[]string {
 func testPasswords(batchSize int, start int, wg *sync.WaitGroup, dict *[]string, passwds *[]string, salts *[]string) {
 	defer wg.Done()
 	for i := start; i < start+batchSize || i < len(*dict); i++ {
-		hasher := sha256.New()
-		hasher.Write([]byte((*dict)[i]))
-		hasher.Write([]byte((*salts)[i]))
-		res := hex.EncodeToString(hasher.Sum(nil))
-		if stringInSlice(res, passwds) {
-			fmt.Println((*dict)[i])
+		for j := 0; j < len(*salts); j++ {
+			hasher := sha256.New()
+			hasher.Write([]byte((*dict)[i]))
+			hasher.Write([]byte((*salts)[j]))
+			res := hex.EncodeToString(hasher.Sum(nil))
+			if res == (*passwds)[j] {
+				fmt.Println((*dict)[i])
+			}
 		}
 	}
 	fmt.Println("Finished process starting at ", start)
