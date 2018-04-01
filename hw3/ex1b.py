@@ -28,7 +28,7 @@ def main():
     for it, i in enumerate(grouped_users_imdb):
         print("Processing {} of {}".format(it, len(grouped_users_imdb)))
         for d in grouped_users_dedis:
-            m = i.merge(d, on=['movie', 'rating']).drop_duplicates()
+            m = i.merge(d, on=['movie']).drop_duplicates()
             if len(m) == len(i.drop_duplicates()):
                 if m.iloc[0].email_x == 'pau.argelaguet@epfl.ch':
                     print("My username is {}".format(m.iloc[0].email_y))
@@ -36,9 +36,6 @@ def main():
                 break
 
     my_movies = dedis.loc[dedis['email'] == me]['movie']
-    for i, m in my_movies.iteritems():
-        my_movies.at[i] = movies[my_movies.at[i]]
-
     my_movies.to_csv("data/my-movies-2.csv", index=False)
 
 
