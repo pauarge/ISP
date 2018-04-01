@@ -29,7 +29,7 @@ def main():
     for i, m in my_movies.iteritems():
         my_movies.at[i] = movies[my_movies.at[i]]
 
-    my_movies.to_csv("data/my-movies-1.csv", index=False, quoting=False)
+    my_movies.to_csv("data/my-movies-1.csv", index=False)
 
 
 if __name__ == '__main__':
