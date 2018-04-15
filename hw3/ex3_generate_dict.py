@@ -1,7 +1,6 @@
 def get_permutations(s):
     if s.isalnum():
-        res = [s]
-        res.append(s.title())
+        res = [s, s.title()]
         for x in range(6):
             for y in range(6):
                 for z in range(6):
