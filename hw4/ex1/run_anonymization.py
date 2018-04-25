@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
-import random, datetime, sys, csv
-from random import randrange, randint
+import random
+import datetime
+import sys
+import csv
+import string
+import hashlib
+from random import randint, randrange
+from operator import itemgetter
 
 date_start = datetime.date(2000, 1, 1)
 date_period = 365 * 17
+
 
 # Reads in emails.txt and movies.txt and creates 'nbr_movies' entries for each
 # email.
@@ -11,12 +18,12 @@ date_period = 365 * 17
 # [ [ user, movie, date, grade ], ... ]
 def create_db(nbr_movies):
     with open("emails.txt") as f:
-        emails = f.read().split("\n");
+        emails = f.read().split("\n")
     while "" in emails:
         emails.remove("")
 
     with open("movies.txt") as f:
-        movies = f.read().split("\n");
+        movies = f.read().split("\n")
     while "" in movies:
         movies.remove("")
 
@@ -36,26 +43,48 @@ def create_db(nbr_movies):
 # Anonymize the given database, but still let the get_movies_with_rating
 # function give the right answers.
 def anonymize_1(db):
-    return db
+    new_db = map(lambda x: ('*', x[1], '*', x[3]), db)
+    return list(set(new_db))
 
 
 # For a given anonymized-database and a rating, this function should return
 # the films with the given rating.
 def get_movies_with_rating(anon, rating):
-    return [anon[0][1], anon[1][1]]
+    res = map(lambda x: x[1], filter(lambda y: y[3] == rating, anon))
+    return list(set(res))
 
 
 # A bit lesser anonymization than anonymize_1, but still no date. The returned
 # database should have enough information to be used by get_top_rated. If you
 # use a too simple hashing-function like sha-256, the result will be rejected.
 def anonymize_2(db):
+    for row in db:
+        row[0] = hashlib.sha256(row[0].encode('utf-8')).hexdigest()
+        row[2] = '*'
     return db
 
 
 # get_top_rated searches for all users having rated a movie and searches their
 # top-rated movie(s). It returns a list of all found movies, also doubles!
 def get_top_rated(anon, movie):
-    return [anon[0][1]]
+    users = {}
+    for row in anon:
+        if row[0] in users:
+            users[row[0]].append(row[1:])
+        else:
+            users[row[0]] = [row[1:]]
+
+    filtered = {k: v for (k, v) in users.items() if len(list(filter(lambda y: y[0] == movie, v))) > 0}
+
+    top_rated = []
+    for k, v in filtered.items():
+        s = sorted(v, key=itemgetter(2), reverse=True)
+        i = 0
+        while s[0][2] == s[i][2]:
+            top_rated.append(s[i][0])
+            i += 1
+
+    return top_rated
 
 
 # This is called when you start the script on localhost, and when the
