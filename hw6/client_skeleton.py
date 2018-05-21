@@ -125,9 +125,7 @@ def generate_chat_messages(num_msg):
     for i in range(num_msg):
         msg = generate_random_message(CHAT_MSG_BODY_LEN)
         msg_idx = str(i).zfill(CHAT_MSG_INDEX_LEN)
-
         messages.append(msg_idx + msg)
-
     return messages
 
 
@@ -145,8 +143,8 @@ def client_sender(servers, num_messages):
         server.public_key = RSA.importKey(pk)
         server.shared_key = hashlib.sha256(os.urandom(AES_KEY_SIZE)).digest()
         print("Shared key of server", server.server_id, server.shared_key)
-        enc = server.public_key.encrypt(server.shared_key, 32)
-        send_msg_to_server_async(server, "shared_key {}".format(enc[0].hex()))
+        enc = rsa_encrypt(server.shared_key, server.public_key)
+        send_msg_to_server_async(server, "shared_key {}".format(enc.hex()))
 
     # Generate and onion-encrypt messages
     messages = generate_chat_messages(num_messages)
