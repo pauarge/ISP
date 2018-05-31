@@ -56,7 +56,7 @@ class RiffleServer:
         self.chat_messages = dict()
 
     def decrypt_msg(self, msg_encrypted):
-        msg_bytes = bytes.fromhex(msg_encrypted)
+        msg_bytes = binascii.unhexlify(msg_encrypted)
         iv = msg_bytes[:AES_IV_SIZE]
         cipher = AES.new(self.client_shared_key, AES_MODE, iv)
         return cipher.decrypt(msg_bytes[AES.block_size:])
@@ -65,7 +65,7 @@ class RiffleServer:
     # respresents the rsa encryption(with our pub key) of the client shared key
     # Decrypt it and store as client_shared_key
     def recv_client_shared_key(self, skey_encrypted):
-        sk = bytes.fromhex(skey_encrypted)
+        sk = binascii.unhexlify(skey_encrypted)
         self.client_shared_key = self.rsa_key_pair.decrypt(sk)
 
     # Receive a chat message from the client, only the primary server
@@ -87,10 +87,11 @@ class RiffleServer:
         # If there is next server send the decrypted message to it,
         # else this is the only server and just store the message
         if len(self.all_servers) > 1:
-            self.udp_socket.sendto("chat_msg_server {}".format(msg.hex()).encode('utf-8'), (self.all_servers[1]))
+            m = "chat_msg_server {}".format(binascii.hexlify(msg).decode('utf-8'))
+            self.udp_socket.sendto(m.encode('utf-8'), (self.all_servers[1]))
         else:
             msg = msg.decode('utf-8')
-            self.chat_messages[msg[:CHAT_MSG_INDEX_SIZE]] = msg[CHAT_MSG_INDEX_SIZE:]
+            self.chat_messages[int(msg[:CHAT_MSG_INDEX_SIZE])] = msg[CHAT_MSG_INDEX_SIZE:]
 
     # Receive a chat message from another server (the previous server in the chain)
     def recv_chat_msg_server(self, msg_encrypted, sender):
@@ -106,11 +107,11 @@ class RiffleServer:
         # else this is the last server, store the message and broadcast it
         next_server_id = self.server_id + 1
         if next_server_id in self.all_servers.keys():
-            self.udp_socket.sendto("chat_msg_server {}".format(msg.hex()).encode('utf-8'),
-                                   (self.all_servers[next_server_id]))
+            msg = "chat_msg_server {}".format(binascii.hexlify(msg).decode('utf-8'))
+            self.udp_socket.sendto(msg.encode('utf-8'), self.all_servers[next_server_id])
         else:
             msg = msg.decode('utf-8')
-            self.chat_messages[msg[:CHAT_MSG_INDEX_SIZE]] = msg[CHAT_MSG_INDEX_SIZE:]
+            self.chat_messages[int(msg[:CHAT_MSG_INDEX_SIZE])] = msg[CHAT_MSG_INDEX_SIZE:]
             for i in self.all_servers:
                 if i != self.server_id:
                     self.udp_socket.sendto("chat_msg_plain {}".format(msg).encode('utf-8'), self.all_servers[i])
@@ -120,8 +121,7 @@ class RiffleServer:
     # the plain-text message which is then broadcasted to all servers.
     # So, this method should just store the message
     def recv_chat_msg_plain(self, msg):
-        print("Received plaintext", msg)
-        self.chat_messages[msg[:CHAT_MSG_INDEX_SIZE]] = msg[CHAT_MSG_INDEX_SIZE:]
+        self.chat_messages[int(msg[:CHAT_MSG_INDEX_SIZE])] = msg[CHAT_MSG_INDEX_SIZE:]
 
     # Process the PIR request from a client. Bitmask has _n_ bits,
     # where _n_ is the number of chat messages. Each bit _j_ in the bitmask
@@ -129,13 +129,15 @@ class RiffleServer:
     # the message with this index is 'selected'.
     # Xor all messages selected by the bitmask and send the result back
     def process_pir_request(self, bitmask, sender):
-
-        result = b''
-
-        # TODO: insert your code here!
+        print("Got bitmask", bitmask)
+        bm = "{0:b}".format(int(bitmask)).zfill(CHAT_MSG_INDEX_SIZE)[::-1]
+        indexes = [i for i, c in enumerate(bm) if c == '1']
+        result = self.chat_messages[indexes[0]].encode()
+        for i in indexes[1:]:
+            result = bytes(x ^ y for x, y in zip(result, self.chat_messages[i].encode()))
 
         # Please be careful here, our client expects the result as bytes
-        # type(result) = <class 'bytes'> in Python3 
+        # type(result) = <class 'bytes'> in Python3
         self.udp_socket.sendto(result, sender)
 
     # Method which runs in a thread
