@@ -9,6 +9,8 @@ import socket
 import binascii
 import os
 
+from functools import reduce
+
 from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
@@ -77,6 +79,7 @@ def onion_encrypt_message(msg, servers):
 # Onion decrypt provided ciphertext
 # See the explanation for the ecnryption
 def onion_decrypt_message(cip, servers):
+    print("Onion decrypt message")
     # TODO: insert your code here!
     pass
 
@@ -144,7 +147,8 @@ def client_sender(servers, num_messages):
         server.shared_key = hashlib.sha256(os.urandom(AES_KEY_SIZE)).digest()
         print("Shared key of server", server.server_id, server.shared_key)
         enc = rsa_encrypt(server.shared_key, server.public_key)
-        send_msg_to_server_async(server, "shared_key {}".format(enc.hex()))
+        m = "shared_key {}".format(binascii.hexlify(enc).decode('utf-8'))
+        send_msg_to_server_async(server, m)
 
     # Generate and onion-encrypt messages
     messages = generate_chat_messages(num_messages)
@@ -166,11 +170,16 @@ def client_sender(servers, num_messages):
 # send the pir requests and finally recover the target message
 # Target message is the one with the provided target_msg_index
 def client_receiver(servers, num_messages, target_msg_index):
-    # TODO: insert your code here!
+    target_builder = ['0'] * num_messages
+    target_builder[target_msg_index] = '1'
+    bitmasks = [int(''.join(target_builder)[::-1], 2)]
+    bitmasks += [int(''.join([random.choice('01') for _ in range(num_messages)]), 2) for _ in range(len(servers) - 1)]
+    bitmasks.append(reduce(lambda x, y: x ^ y, bitmasks))
+    responses = [send_msg_to_server(s, 'pir_req {}'.format(str(b))) for s, b in zip(servers, bitmasks[1:])]
 
     # Return the target message (string), only the body of the message,
     # without the message index
-    return result
+    return reduce(lambda x, y: bytes(i ^ j for i, j in zip(x, y)), responses).decode()
 
 
 # This function is for your convenience, so you could test your solution locally

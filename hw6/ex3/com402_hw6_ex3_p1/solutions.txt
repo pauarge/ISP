@@ -1,0 +1,68 @@
+Pau Argelaguet Franquelo
+284216
+
+# Trace 1: HTTP
+## Give three websites (domain name and IP addresses) visited from source IP
+address `192.168.0.100` (this does not include the URLs related to online ads,
+showing images, internet telemetry, API calls, etc.)
+
+bing.com - 198.105.251.25
+baidu.com - 180.76.3.151
+amazon.com - 205.251.242.54
+
+## Give three search queries and the domain of the site for each query made from source IP address `192.168.0.100`
+
+bing.com - "madison map"
+baidu.com - "来自星星的你" (chinese characters)
+amazon.com - "adventures in Stochastic Processes"
+
+# Trace 2: FTP
+## What is the user name and password used to connect to the FTP server?
+
+username: shiningmoon
+password: public
+
+## List all files that were downloaded.
+
+dragon.zip, L2Switch.java, phase1.html
+
+## List the full path for two files (in different directories) on the FTP server that were NOT downloaded.
+
+/phase1/ARP.java, /only/one/failed
+
+# Trace 3: Traceroute
+## Briefly describe how the traceroute tool works including which network protocols are in use.
+
+[Your answer here]
+
+## Give the source IP address that issued the traceroute command and the destination IP address.
+
+Source IP: [source IP]
+Destination IP: [destination IP]
+
+## List the IP addresses on the route between source and destination (meaning:
+do not include the IP addresses of the source and destination).
+
+[IP1], [IP2], ..., [IPN]
+
+# Trace 4: POP
+## What is the POP username and password?
+
+username: cs155@dummymail.com
+password: whitehat
+
+## How many emails are in the user’s mailbox?
+
+[number of emails]
+
+## Give the contents of from, to, subject, and date for one email message.
+
+From: joe <cs155@dummymail.com>
+To: cs155@dummymail.com
+Subject: foobar
+Date: Fri, 23 Apr 2010 08:20:55 -0700
+
+## What email client (application) and operating system is this person using to send and receive email?
+
+Client: Thunderbird 2.0.0.23
+OS: Windows
